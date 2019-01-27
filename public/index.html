@@ -22,20 +22,52 @@
       work correctly both with client-side routing and a non-root public URL.
       Learn how to configure a non-root public URL by running `npm run build`.
     -->
-    <title>React App</title>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
-    <!--
-      This HTML file is a template.
-      If you open it directly in the browser, you will see an empty page.
+    <script src="https://unpkg.com/@pusher/chatkit-client@1/dist/web/chat.js"></script>
+    <script> 
+      const tokenProvider = new Chatkit.TokenProvider({
+        url: https://us1.pusherplatform.io/services/chatkit_token_provider/v1/0c189868-5ebb-4311-8552-37b4dff1664d/token
+      });
+      const chatManager = new Chatkit.ChatManager({
+        instanceLocator: "v1:us1:0c189868-5ebb-4311-8552-37b4dff1664d",
+        userId: "User1",
+        tokenProvider: tokenProvider
+      });
+      
+      chatManager
+        .connect()
+        .then(currentUser => {
+          currentUser.subscribeToRoom({
+            roomId: currentUser.rooms[0].id,
+            hooks: {
+              onMessage: message => {
+                const ul = document.getElementById("message-list");
+                const li = document.createElement("li");
+                li.appendChild(
+                  document.createTextNode(`${message.senderId}: ${message.text}`)
+                );
+                ul.appendChild(li);
+              }
+            }
+          });
 
-      You can add webfonts, meta tags, or analytics to this file.
-      The build step will place the bundled scripts into the <body> tag.
-
-      To begin the development, run `npm start` or `yarn start`.
-      To create a production bundle, use `npm run build` or `yarn build`.
-    -->
-  </body>
+          const form = document.getElementById("message-form");
+          form.addEventListener("submit", e => {
+            e.preventDefault();
+            const input = document.getElementById("message-text");
+            currentUser.sendMessage({
+              text: input.value,
+              roomId: currentUser.rooms[0].id
+            });
+            input.value = "";
+          });
+        })
+        .catch(error => {
+          console.error("error:", error);
+        });
+      </script>
+    </body>
 </html>
